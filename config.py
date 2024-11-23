@@ -1,11 +1,7 @@
 import os
 from dotenv import load_dotenv
-import logging
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+
 load_dotenv()
 
 class Config:
@@ -22,7 +18,8 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     DEBUG = True
     TESTING = True
-
+    # SQLALCHEMY_DATABASE_URI = os.environ.get(
+        # "DATABASE_URL")  # надо - отдельно TEST_DATABASE_URL
 
 config = {
     'development': DevelopmentConfig,
@@ -30,3 +27,5 @@ config = {
 
     'default': TestingConfig}
 
+    # SECRET_KEY = os.getenv('SECRET_KEY')
+    # DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
