@@ -1,7 +1,7 @@
 import os
 import sys
 
-from .factory_generation import ClientFactory, ParkingFactory
+from module_29_testing.hw.tests.factory_generation import ClientFactory, ParkingFactory
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.model import db, Base, Client, Parking, ClientParking, is_parking_open
