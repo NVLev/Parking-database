@@ -1,0 +1,63 @@
+!! psycopg2-binary
+
+docker network create myapp-network
+docker run --network myapp-network --name flask-app flask-image
+
+# Starting the database after making changes to your application:
+# This will rebuild the web image and start it, leaving the db untouched.
+docker-compose up -d --build web
+
+# Starting the database again after making changes to your application:
+# This will start the db service without rebuilding the image (since it's already built).
+docker-compose up -d db
+# First time setting up the database:
+docker-compose up -d --build db
+docker-compose exec db bash
+
+стереть:
+docker-compose down
+docker-compose down -v
+# remove docker images
+docker-compose down --rmi local
+# Remove Docker build cache:
+docker builder prune -f
+docker volume rm postgres_data
+docker volume prune
+
+psql -U $POSTGRES_USER
+psql -U $POSTGRES_USER -d skillbox_db
+CREATE DATABASE skillbox_db;
+\c skillbox_db
+
+CREATE TABLE test_psql_table (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+\dt
+\q
+exit
+localhost
+skillbox_db
+user
+password
+
+[alembic]
+alembic init migrations
+alembic revision --autogenerate -m 'Create tables'
+alembic revision --autogenerate -m 'added opening hours'
+
+# look at alembic/versions
+# If evrth is OK -
+alembic upgrade head
+# down
+alembic downgrade -1
+alembic downgrade base
+# потом удалить миграцию
+
+# разрешение конфликта:
+alembic merge <new> <previous>
+
+
+

@@ -33,7 +33,7 @@ class Client(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     surname: Mapped[str] = mapped_column(String(50), nullable=False)
-    credit_card: Mapped[str] = mapped_column(String(50))
+    credit_card: Mapped[str] = mapped_column(String(50), nullable=True)
     car_number: Mapped[str] = mapped_column(String(10))
 
     def __repr__(self):
@@ -57,6 +57,9 @@ class Parking(Base):
     opening_time: Mapped[Time] = mapped_column(Time, nullable=False)
     closing_time: Mapped[Time] = mapped_column(Time, nullable=False)
 
+    def __repr__(self):
+        return f"Pysäkointi {self.id} {self.address}"
+
     def to_json(self) -> Dict[str, Any]:
         return {c.name: getattr(self, c.name) for c in
                 self.__table__.columns}
@@ -65,7 +68,7 @@ def is_parking_open(opening_time: time, closing_time: time) -> bool:
     current_time = datetime.now().time()
     if opening_time <= closing_time:
         return opening_time <= current_time <= closing_time
-    else:  # Handles cases where parking is open overnight
+    else:
         return current_time >= opening_time or current_time <= closing_time
 
 class ClientParking(Base):

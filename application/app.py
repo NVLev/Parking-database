@@ -6,11 +6,11 @@ from typing import List
 
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from sqlalchemy import func
+from sqlalchemy import func, MetaData
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.model import engine
-
+from config import logger
 load_dotenv()
 
 db_initialized = False
@@ -18,23 +18,56 @@ db_initialized = False
 def create_app():
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')
-    # app.config.from_object(config)
-    # config.init_app(app)
 
-    # app.config.from_pyfile('/home/user/PycharmProjects/python_advanced/module_29_testing/hw/config.py')
-    # Config.init_app
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from models.model import db
     db.init_app(app)
     from models.model import Base, Client, Parking, ClientParking, is_parking_open
 
-
+    sample_clients = [
+        {"name": "John", "surname": "Doe", "credit_card": "1234567890123456", "car_number": "ABC-123"},
+        {"name": "Jane", "surname": "Doe", "credit_card": "9876543210123456", "car_number": "DEF-456"}
+    ]
+    sample_parkings = [
+        {"address": "Main Street 1", "count_places": 10, "count_available_places": 10, "opening_time": "08:00",
+         "closing_time": "20:00"},
+        {"address": "Oak Avenue 2", "count_places": 5, "count_available_places": 5, "opening_time": "09:00",
+         "closing_time": "18:00"}
+    ]
 
     @app.before_request
     def initialize_database():
         global db_initialized
         if not db_initialized:
+            metadata = MetaData()
+            metadata.reflect(bind=engine)
+            Base.metadata.drop_all(engine)
             Base.metadata.create_all(engine)
+            for client_data in sample_clients:
+                new_client = Client(
+                    name=client_data["name"],
+                    surname=client_data["surname"],
+                    credit_card=client_data["credit_card"],
+                    car_number=client_data["car_number"],
+                )
+                db.session.add(new_client)
+                logger.info(f'Uusi käyttäjä {new_client} on lisätty')
+            for parking_data in sample_parkings:
+                new_parking = Parking(
+                    address=parking_data["address"],
+                    opened=is_parking_open(
+                        datetime.strptime(parking_data["opening_time"], "%H:%M").time(),
+                        datetime.strptime(parking_data["closing_time"], "%H:%M").time(),
+                    ),
+                    count_places=parking_data["count_places"],
+                    count_available_places=parking_data["count_available_places"],
+                    opening_time=datetime.strptime(parking_data["opening_time"], "%H:%M").time(),
+                    closing_time=datetime.strptime(parking_data["closing_time"], "%H:%M").time(),
+                )
+                db.session.add(new_parking)
+                logger.info(f'Uusi pysäköinti {new_parking} on lisätty')
+            db.session.commit()
+            db_initialized = True
 
     @app.route("/clients", methods=['GET'])
     def get_users_handler():
@@ -154,6 +187,7 @@ def create_app():
 
     @app.route("/check_out_parkings", methods=['DELETE'])
     def delete_client_parking():
+        logger.info("Aloitetaan delete_client_parking")
         data = request.json
         client_id = data.get('client_id')
         parking_id = data.get('parking_id')
@@ -170,18 +204,18 @@ def create_app():
             return jsonify({"error": "Parking not found"}), 404
         if not parking.opened:
             return jsonify({"error": "Parking is closed"}), 400
-        parking.count_available_places += 1
 
         check_in = db.session.query(ClientParking).filter_by(
                 client_id=client_id,
                 parking_id=parking_id,
                 time_out=None
             ).first()
-
+        logger.info(f'check-in on {check_in}')
         if not check_in:
             return jsonify({"error": "No active check-in found for this client and parking"}), 404
 
         check_in.time_out = db.session.query(func.now()).scalar()
+        logger.info(f'time_out - {check_in.time_out}')
 
         parking.count_available_places += 1
 
