@@ -1,0 +1,36 @@
+---
+tags:
+  - Asiakkaat
+summary: Lisää uusi asiakas
+description: Lisää uuden asiakkaan tietokantaan.
+consumes:
+  - application/json
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/UusiAsiakas'
+responses:
+  201:
+    description: Uusi asiakas lisätty
+  400:
+    description: Virheellinen pyyntö
+components:
+  schemas:
+    UusiAsiakas:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Asiakkaan etunimi
+        surname:
+          type: string
+          description: Asiakkaan sukunimi
+        credit_card:
+          type: string
+          description: Asiakkaan luottokorttinumero
+        car_number:
+          type: string
+          description: Asiakkaan auton rekisterinumero
+

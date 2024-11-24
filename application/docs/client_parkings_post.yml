@@ -1,0 +1,47 @@
+---
+tags:
+  - Pysäköinti
+summary: Asiakas kirjautuu pysäköintiin
+description: Kirjaa asiakkaan sisään pysäköintipaikalle.
+consumes:
+  - application/json
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Kirjautuminen'
+responses:
+  201:
+    description: Sisäänkirjautuminen onnistui
+    schema:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Viesti sisäänkirjautumisesta
+        check_in_time:
+          type: string
+          format: date-time
+          description: Sisäänkirjautumisaika
+        parking_address:
+          type: string
+          description: Pysäköintipaikan osoite
+        available_places:
+          type: integer
+          description: Vapaiden paikkojen määrä
+  400:
+    description: Virheellinen pyyntö tai pysäköintipaikka suljettu
+  404:
+    description: Asiakasta tai pysäköintipaikkaa ei löytynyt
+components:
+  schemas:
+    Kirjautuminen:
+      type: object
+      properties:
+        client_id:
+          type: integer
+          description: Asiakkaan ID
+        parking_id:
+          type: integer
+          description: Pysäköintipaikan ID

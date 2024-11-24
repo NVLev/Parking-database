@@ -3,7 +3,7 @@ import random
 import sys
 from datetime import datetime
 from typing import List
-
+from flasgger import Swagger, swag_from
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from sqlalchemy import func, MetaData
@@ -18,8 +18,21 @@ db_initialized = False
 def create_app():
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')
-
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    app.config['SWAGGER'] = {
+        'title': 'Pysäköintisovellus API',
+        'uiversion': 3,
+        'specs_route': '/docs/',
+        'openapi': '3.0.0',
+        'specs': [{
+            'endpoint': 'apispec_1',
+            'route': '/apispec_1.json',
+            'rule_filter': lambda rule: True,
+            'model_filter': lambda tag: True,
+        }]
+    }
+    swagger = Swagger(app)
+
     from models.model import db
     db.init_app(app)
     from models.model import Base, Client, Parking, ClientParking, is_parking_open
@@ -70,6 +83,7 @@ def create_app():
             db_initialized = True
 
     @app.route("/clients", methods=['GET'])
+    @swag_from('docs/clients_get.yml')
     def get_users_handler():
         """API-päätepiste - hakeminen asiakkaita"""
         clients: List[Client] = db.session.query(Client).all()
@@ -77,12 +91,14 @@ def create_app():
         return jsonify(clients_list), 200
 
     @app.route("/clients/<int:client_id>", methods=['GET'])
+    @swag_from('docs/clients_client_id_get.yml')
     def get_user_handler(client_id: int):
         """API-päätepiste - hakeminen asiakasta sen ID:n perusteella."""
         client: Client = db.session.query(Client).get(client_id)
         return jsonify(client.to_json()), 200
 
     @app.route("/clients/add_client", methods=['POST'])
+    @swag_from('docs/clients_add_client_post.yml')
     def add_client():
         """ API-päätepiste - lisää uusia asiakasta"""
         data = request.json
@@ -102,10 +118,10 @@ def create_app():
 
 
     @app.route("/parking/add_parking", methods=['POST'])
+    @swag_from('docs/parking_add_parking_post.yml')
     def add_parking():
         """API-päätepiste - lisää uusia pysäköintiä"""
         try:
-            print("Received data:", request.json)
             data = request.json
             address = data.get('address')
             #
@@ -126,10 +142,11 @@ def create_app():
             db.session.commit()
             return 'Uusi parkkipaika  lisätty tietokantaan', 201
         except Exception as e:
-            print("Error:", str(e))
+            logger.info(f"Error:, {str(e)}")
             return jsonify({"error": str(e)}), 400
 
     @app.route("/client_parkings", methods=['POST'])
+    @swag_from('docs/client_parkings_post.yml')
     def check_in_parking():
         """
         API-päätepiste käsittelee asiakkaan pysäköintipaikan sisäänkirjautumisen
@@ -146,23 +163,23 @@ def create_app():
 
         # Validoi syöttö (seka asiakasta että parkkipaikkaa
         if not client_id or not parking_id:
-            return jsonify({"error": "Both client_id and parking_id are required"}), 400
+            return jsonify({"error": "Sekä client_id että parking_id vaaditaan"}), 400
 
         # Tarkista asiakasta
         client = db.session.query(Client).get(client_id)
         if not client:
-            return jsonify({"error": "Client not found"}), 404
+            return jsonify({"error": "Asiakasta ei löydy"}), 404
 
         # Tarkista parkkipaikkaa (on ja auki)
         parking = db.session.query(Parking).get(parking_id)
         if not parking:
-            return jsonify({"error": "Parking not found"}), 404
+            return jsonify({"error": "Pysäköintiä ei löydy"}), 404
         if not parking.opened:
-            return jsonify({"error": "Parking is closed"}), 400
+            return jsonify({"error": "Pysäköinti on suljettu"}), 400
 
         # Tarkista vapaita paikkoja pysäköintilla
         if parking.count_available_places <= 0:
-            return jsonify({"error": "No available parking spaces"}), 400
+            return jsonify({"error": "Ei käytettävissä olevia pysäköintipaikkoja"}), 400
 
         new_client_parking = ClientParking(
             client_id=client_id,
@@ -186,6 +203,7 @@ def create_app():
         }), 201
 
     @app.route("/check_out_parkings", methods=['DELETE'])
+    @swag_from('docs/check_out_parkings_delete.yml')
     def delete_client_parking():
         logger.info("Aloitetaan delete_client_parking")
         data = request.json
@@ -193,17 +211,17 @@ def create_app():
         parking_id = data.get('parking_id')
 
         if not client_id or not parking_id:
-            return jsonify({"error": "Both client_id and parking_id are required"}), 400
+            return jsonify({"error": "Sekä client_id että parking_id vaaditaan."}), 400
 
         client = db.session.query(Client).get(client_id)
         if not client:
-            return jsonify({"error": "Client not found"}), 404
+            return jsonify({"error": "Asiakasta ei löydy"}), 404
 
         parking = db.session.query(Parking).get(parking_id)
         if not parking:
-            return jsonify({"error": "Parking not found"}), 404
+            return jsonify({"error": "Pysäköintiä ei löydy"}), 404
         if not parking.opened:
-            return jsonify({"error": "Parking is closed"}), 400
+            return jsonify({"error": "Pysäköintiä ei löydy"}), 400
 
         check_in = db.session.query(ClientParking).filter_by(
                 client_id=client_id,
@@ -212,7 +230,8 @@ def create_app():
             ).first()
         logger.info(f'check-in on {check_in}')
         if not check_in:
-            return jsonify({"error": "No active check-in found for this client and parking"}), 404
+            return jsonify(
+                {"error": "Tälle asiakkaalle ja pysäköintipaikalle ei löytynyt aktiivista sisäänkirjautumista"}), 404
 
         check_in.time_out = db.session.query(func.now()).scalar()
         logger.info(f'time_out - {check_in.time_out}')
@@ -220,5 +239,5 @@ def create_app():
         parking.count_available_places += 1
 
         db.session.commit()
-        return jsonify({"message": "Check-out completed successfully"}), 200
+        return jsonify({"message": "Uloskirjautuminen suoritettu onnistuneesti"}), 200
     return app

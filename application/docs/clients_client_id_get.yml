@@ -1,0 +1,32 @@
+---
+tags:
+  - Asiakkaat
+summary: Hae kaikki asiakkaat
+description: Palauttaa listan kaikista järjestelmässä olevista asiakkaista.
+responses:
+  200:
+    description: Lista asiakkaista
+    schema:
+      type: array
+      items:
+        $ref: '#/components/schemas/Asiakas'
+components:
+  schemas:
+    Asiakas:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Asiakkaan ID
+        name:
+          type: string
+          description: Asiakkaan etunimi
+        surname:
+          type: string
+          description: Asiakkaan sukunimi
+        credit_card:
+          type: string
+          description: Asiakkaan luottokorttinumero
+        car_number:
+          type: string
+          description: Asiakkaan auton rekisterinumero

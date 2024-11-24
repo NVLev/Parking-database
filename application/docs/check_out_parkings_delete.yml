@@ -1,0 +1,32 @@
+---
+tags:
+  - Pysäköinti
+summary: Asiakas kirjautuu ulos pysäköinnistä
+description: Kirjaa asiakkaan ulos pysäköintipaikalta.
+consumes:
+  - application/json
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/Uloskirjautuminen'
+
+responses:
+  200:
+    description: Uloskirjautuminen onnistui
+  400:
+    description: Virheellinen pyyntö
+  404:
+    description: Asiakasta tai pysäköintipaikkaa ei löytynyt tai aktiivista sisäänkirjautumista ei löytynyt.
+components:
+  schemas:
+    Uloskirjautuminen:
+      type: object
+      properties:
+        client_id:
+          type: integer
+          description: Asiakkaan ID
+        parking_id:
+          type: integer
+          description: Pysäköintipaikan ID

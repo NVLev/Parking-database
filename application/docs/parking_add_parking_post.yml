@@ -1,0 +1,41 @@
+---
+tags:
+  - Pysäköintipaikat
+summary: Lisää uusi pysäköintipaikka
+description: Lisää uuden pysäköintipaikan tietokantaan.
+consumes:
+  - application/json
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/UusiPysakointipaikka'
+
+responses:
+  201:
+    description: Uusi pysäköintipaikka lisätty
+  400:
+    description: Virheellinen pyyntö
+components:
+  schemas:
+    UusiPysakointipaikka:
+      type: object
+      properties:
+        address:
+          type: string
+          description: Pysäköintipaikan osoite
+        count_places:
+          type: integer
+          description: Pysäköintipaikkojen kokonaismäärä
+        count_available_places:
+          type: integer
+          description: Vapaiden pysäköintipaikkojen määrä
+        opening_time:
+          type: string
+          format: HH:mm
+          description: Avautumisaika (HH:mm)
+        closing_time:
+          type: string
+          format: HH:mm
+          description: Sulkemisaika (HH:mm)
