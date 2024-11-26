@@ -1,17 +1,39 @@
-from datetime import datetime, time
-from typing import List, Dict, Any
-import sys
 import os
-from sqlalchemy import Time
+import sys
+from datetime import datetime, time
+from typing import Any, Dict, List
+
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import Time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import Config
-
-from sqlalchemy import Column, Integer, String, Float, \
-    create_engine, Sequence, Identity, ForeignKey, delete, Boolean, JSON, DateTime, func
-from sqlalchemy.orm import sessionmaker, declarative_base, relationship, DeclarativeBase, Mapped, mapped_column
 import logging
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Identity,
+    Integer,
+    Sequence,
+    String,
+    create_engine,
+    delete,
+    func,
+)
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    declarative_base,
+    mapped_column,
+    relationship,
+    sessionmaker,
+)
+
+from config import Config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,14 +44,17 @@ session = Session()
 
 db = SQLAlchemy()
 
+
 class Base(DeclarativeBase):
     pass
+
 
 class Client(Base):
     """
     Asiakkaiden tietokantamalli
     """
-    __tablename__ = 'client'
+
+    __tablename__ = "client"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     surname: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -40,16 +65,16 @@ class Client(Base):
         return f"Asiakas {self.name} {self.surname}"
 
     def to_json(self) -> Dict[str, Any]:
-        return {c.name: getattr(self, c.name) for c in
-                self.__table__.columns}
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 class Parking(Base):
     """
     Pysäköintiä tietokantamalli
     """
-    __tablename__ = 'parking'
-    id: Mapped[int] = mapped_column(Integer, Sequence('parking_id_seq'), primary_key=True)
+
+    __tablename__ = "parking"
+    id: Mapped[int] = mapped_column(Integer, Sequence("parking_id_seq"), primary_key=True)
     address: Mapped[str] = mapped_column(String(100), nullable=False)
     opened: Mapped[bool] = mapped_column(Boolean)
     count_places: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -61,8 +86,8 @@ class Parking(Base):
         return f"Pysäkointi {self.id} {self.address}"
 
     def to_json(self) -> Dict[str, Any]:
-        return {c.name: getattr(self, c.name) for c in
-                self.__table__.columns}
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 def is_parking_open(opening_time: time, closing_time: time) -> bool:
     current_time = datetime.now().time()
@@ -71,13 +96,19 @@ def is_parking_open(opening_time: time, closing_time: time) -> bool:
     else:
         return current_time >= opening_time or current_time <= closing_time
 
+
 class ClientParking(Base):
     """
     Asiakkaiden - parkkipaikkojen tietokantamalli
     """
-    __tablename__ = 'client_parking'
-    id: Mapped[int] = mapped_column(Integer, Sequence('parking_id_seq'), primary_key=True)
-    client_id: Mapped[int] = mapped_column(Integer, ForeignKey('client.id'))
-    parking_id: Mapped[int] = mapped_column(Integer, ForeignKey('parking.id'))
-    time_in: Mapped[datetime] = mapped_column(DateTime, nullable=True, server_default=func.now())
-    time_out: Mapped[datetime] = mapped_column(DateTime, nullable=True, server_default=func.now())
+
+    __tablename__ = "client_parking"
+    id: Mapped[int] = mapped_column(Integer, Sequence("parking_id_seq"), primary_key=True)
+    client_id: Mapped[int] = mapped_column(Integer, ForeignKey("client.id"))
+    parking_id: Mapped[int] = mapped_column(Integer, ForeignKey("parking.id"))
+    time_in: Mapped[datetime] = mapped_column(
+        DateTime, nullable=True, server_default=func.now()
+    )
+    time_out: Mapped[datetime] = mapped_column(
+        DateTime, nullable=True, server_default=func.now()
+    )
