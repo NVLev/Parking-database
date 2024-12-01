@@ -21,7 +21,7 @@
   Документация на эндпоинте /docs
 <p></p>
 <h2>Стек проекта:</h2>
-Flask, Application Factory, Poetry, PostgreSQL, SQLAlchemy, Alembic, Pytest, Factory Boy, Docker-compose 
+Flask, Application Factory, Poetry, PostgreSQL, SQLAlchemy, Alembic, Pytest, Docker-compose 
 <p></p>
 <b>Особенности:</b>
 <p>Документация на финском языке</p>
